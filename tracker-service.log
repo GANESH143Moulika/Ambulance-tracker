@@ -1,0 +1,2 @@
+$ bun --hot index.ts
+Tracker WebSocket server running on port 3003

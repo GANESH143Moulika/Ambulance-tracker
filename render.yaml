@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: ambulance-tracker
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: bun install && bun run db:generate && bun run build
+    startCommand: bun run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: file:/opt/render/project/src/db/prod.db
+    disk:
+      name: db-disk
+      mountPath: /opt/render/project/src/db
+      sizeGB: 1

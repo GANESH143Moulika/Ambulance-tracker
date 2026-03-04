@@ -1,0 +1,125 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Ambulance {
+  id            String         @id @default(cuid())
+  vehicleNumber String         @unique
+  driverName    String
+  driverPhone   String
+  driverPhoto   String?
+  rating        Float          @default(4.5)
+  totalRides    Int            @default(0)
+  status        AmbulanceStatus @default(AVAILABLE)
+  latitude      Float?
+  longitude     Float?
+  speed         Float?         // km/h
+  heading       Float?         // degrees
+  lastUpdate    DateTime       @default(now())
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  incidents     Incident[]
+  bookings      Booking[]
+}
+
+enum AmbulanceStatus {
+  AVAILABLE
+  ON_DUTY
+  EN_ROUTE_TO_PICKUP
+  AT_PICKUP
+  TRANSPORTING
+  OUT_OF_SERVICE
+}
+
+model Incident {
+  id              String        @id @default(cuid())
+  type            String
+  description     String?
+  address         String?
+  latitude        Float?
+  longitude       Float?
+  priority        IncidentPriority @default(MEDIUM)
+  status          IncidentStatus @default(PENDING)
+  assignedAmbulanceId String?
+  assignedAmbulance Ambulance?  @relation(fields: [assignedAmbulanceId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  resolvedAt      DateTime?
+  bookings        Booking[]
+}
+
+enum IncidentPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IncidentStatus {
+  PENDING
+  DISPATCHED
+  EN_ROUTE
+  ON_SCENE
+  TRANSPORTING
+  RESOLVED
+  CANCELLED
+}
+
+model Hospital {
+  id          String   @id @default(cuid())
+  name        String
+  address     String
+  latitude    Float
+  longitude   Float
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  bookings    Booking[]
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  status          BookingStatus @default(REQUESTED)
+  patientName     String?
+  patientPhone    String
+  pickupAddress   String?
+  pickupLatitude  Float?
+  pickupLongitude Float?
+  emergencyType   String
+  notes           String?
+  ambulanceId     String?
+  ambulance       Ambulance?    @relation(fields: [ambulanceId], references: [id])
+  incidentId      String?
+  incident        Incident?     @relation(fields: [incidentId], references: [id])
+  hospitalId      String?
+  hospital        Hospital?     @relation(fields: [hospitalId], references: [id])
+  otp             String?       // 4-digit OTP for confirmation
+  distance        Float?        // in km
+  fare            Float?
+  rating          Float?
+  review          String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  completedAt     DateTime?
+}
+
+enum BookingStatus {
+  REQUESTED      // User requested ambulance
+  AMBULANCE_ASSIGNED // Ambulance assigned, waiting for driver to accept
+  DRIVER_ACCEPTED    // Driver accepted, en route to pickup
+  ARRIVING       // Near pickup location
+  ARRIVED        // At pickup location
+  PATIENT_PICKED // Patient picked up
+  EN_ROUTE_HOSPITAL // On the way to hospital
+  ARRIVED_HOSPITAL  // Arrived at hospital
+  COMPLETED      // Trip completed
+  CANCELLED      // Booking cancelled
+}
